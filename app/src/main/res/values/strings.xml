@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenScreenShare</string>
+    <string name="share_screen">Share My Screen</string>
+    <string name="view_screen">View Partner Screen</string>
+    <string name="lan_connection">LAN Connection</string>
+    <string name="lan_description">Connect directly via WiFi without Bluetooth pairing</string>
+    <string name="your_ip_address">Your IP Address</string>
+    <string name="tell_ip_to_partner">Tell this IP to your partner</string>
+    <string name="share_no_ip_needed">No IP needed. Starts server and waits for partner to connect.</string>
+    <string name="view_needs_partner_ip">Enter partner\'s IP to connect to their screen.</string>
+    <string name="enter_ip_hint">Enter IP Address</string>
+    <string name="scan_devices">Scan for Devices</string>
+    <string name="scanning">Scanning...</string>
+    <string name="stop_sharing">Stop Sharing</string>
+    <string name="stop_viewing">Stop Viewing</string>
+    <string name="status_waiting">Waiting for connection...</string>
+    <string name="status_connected">Connected to %s</string>
+    <string name="status_streaming">Streaming to %s</string>
+    <string name="status_viewing">Viewing from %s</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="notification_channel">Screen Capture</string>
+    <string name="notification_title">Screen Sharing Active</string>
+    <string name="notification_text">Your screen is being shared</string>
+    <string name="bluetooth_pairing">Bluetooth Pairing</string>
+    <string name="pair_and_connect">Pair &amp; Connect</string>
+    <string name="no_devices_found">No devices found. Tap scan to search.</string>
+    <string name="permission_required">Permission required</string>
+    <string name="bt_permission_needed">Bluetooth permissions are needed to discover devices</string>
+    <string name="ip_exchange_failed">Failed to exchange IP addresses</string>
+    <string name="share_description">Broadcast your screen to a connected device over the local network</string>
+    <string name="view_description">Connect to a device and view their shared screen in real-time</string>
+    <string name="no_wifi_connection">No WiFi connection</string>
+    <string name="ip_copied">IP address copied</string>
+    <string name="enter_partner_ip">Enter partner IP address</string>
+    <string name="invalid_ip_format">Invalid IP address format</string>
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_message">For reliable screen sharing, this app needs to run in the background. Please disable battery optimization for this app to prevent it from being killed when you switch to other apps.</string>
+    <string name="battery_optimization_allow">Disable Optimization</string>
+    <string name="battery_optimization_continue">Continue Anyway</string>
+    <string name="overlay_permission_title">Overlay Permission</string>
+    <string name="overlay_permission_message">To keep screen sharing active when you switch apps, this app needs to display a small status indicator over other apps. Please grant overlay permission for reliable sharing.</string>
+    <string name="overlay_permission_allow">Grant Permission</string>
+    <string name="overlay_permission_continue">Continue Anyway</string>
+</resources>

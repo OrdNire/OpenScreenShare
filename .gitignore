@@ -1,0 +1,19 @@
+# Build outputs
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+
+# Local config
+local.properties
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db

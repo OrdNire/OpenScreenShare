@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_primary">#1a6b52</color>
+    <color name="md_primary_container">#a4f3d8</color>
+    <color name="md_on_primary">#ffffff</color>
+    <color name="md_on_primary_container">#002117</color>
+    <color name="md_secondary">#4b635a</color>
+    <color name="md_secondary_container">#cde9dc</color>
+    <color name="md_surface">#f5fbf6</color>
+    <color name="md_on_surface">#171d1a</color>
+    <color name="md_surface_variant">#dbe5de</color>
+    <color name="md_on_surface_variant">#3f4943</color>
+    <color name="md_error">#ba1a1a</color>
+    <color name="md_on_error">#ffffff</color>
+    <color name="streaming_overlay">#99000000</color>
+    <color name="status_text">#ffffff</color>
+    <color name="stop_button">#ff5252</color>
+</resources>
