@@ -140,6 +140,7 @@ class StreamServer {
                         CTRL_REQUEST_KEY_FRAME -> {
                             keyFrameRequestsReceived++
                             Log.d(TAG, "Key frame request received from client (total: $keyFrameRequestsReceived)")
+                            sendSpsPps()
                             encoder?.forceKeyFrame()
                         }
                         else -> {

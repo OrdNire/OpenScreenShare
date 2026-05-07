@@ -1,7 +1,13 @@
 package com.btscreenshare
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.SurfaceHolder
@@ -26,14 +32,32 @@ class StreamViewActivity : AppCompatActivity() {
     private lateinit var btnStop: MaterialButton
     private lateinit var overlayStatus: View
 
-    private var streamClient: StreamClient? = null
-    private var videoDecoder: VideoDecoder? = null
+    private var streamViewService: StreamViewService? = null
+    private var isServiceBound = false
+    private var isSurfaceReady = false
+    private var decoderWasReleased = false
     private var remoteIp: String = "Unknown"
     private val handler = Handler(Looper.getMainLooper())
     private var statsRunnable: Runnable? = null
     private var watchdogRunnable: Runnable? = null
     @Volatile private var lastFrameDecodedTime = 0L
     private var frozenWarningShown = false
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as StreamViewService.LocalBinder
+            streamViewService = binder.getService()
+            isServiceBound = true
+            Log.d(TAG, "Service connected")
+            initIfReady()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            streamViewService = null
+            isServiceBound = false
+            Log.d(TAG, "Service disconnected")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,12 +87,69 @@ class StreamViewActivity : AppCompatActivity() {
             stopViewing()
         }
 
-        // Initialize decoder
-        videoDecoder = VideoDecoder()
-        videoDecoder?.setCallback(object : VideoDecoder.Callback {
+        // Start foreground service
+        val serviceIntent = Intent(this, StreamViewService::class.java).apply {
+            action = StreamViewService.ACTION_START
+            putExtra(StreamViewService.EXTRA_SERVER_IP, remoteIp)
+        }
+        startForegroundService(serviceIntent)
+
+        // Bind to service
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+
+        // Wait for surface to be ready, then configure decoder
+        surfaceRemote.holder.addCallback(object : SurfaceHolder.Callback {
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                Log.d(TAG, "Surface created")
+                isSurfaceReady = true
+                initIfReady()
+            }
+
+            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+                Log.d(TAG, "Surface changed: ${width}x${height}")
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+                Log.d(TAG, "Surface destroyed")
+                isSurfaceReady = false
+                decoderWasReleased = true
+                streamViewService?.releaseDecoder()
+                Log.d(TAG, "Decoder released due to surface destruction")
+            }
+        })
+
+        startStatsUpdate()
+        startWatchdog()
+    }
+
+    private fun initIfReady() {
+        if (!isSurfaceReady || !isServiceBound) {
+            Log.d(TAG, "initIfReady: waiting for surface=${isSurfaceReady}, service=${isServiceBound}")
+            return
+        }
+        val service = streamViewService
+        val surface = surfaceRemote.holder.surface
+        if (service == null || !surface.isValid) {
+            Log.w(TAG, "initIfReady: service or surface invalid")
+            return
+        }
+
+        if (decoderWasReleased) {
+            // Surface was recreated after destruction - recreate decoder
+            Log.d(TAG, "initIfReady: recreating decoder after surface recreation")
+            service.recreateDecoder(surface)
+            decoderWasReleased = false
+            Thread { service.requestKeyFrame() }.start()
+        } else {
+            // Initial creation
+            Log.d(TAG, "initIfReady: configuring decoder")
+            service.configureDecoder(surface)
+        }
+
+        // Set decoder callback
+        service.setDecoderCallback(object : VideoDecoder.Callback {
             override fun onDecoderError(error: String) {
                 Log.w(TAG, "Decoder error: $error")
-                // Don't show toast for every error - decoder will auto-recover
             }
 
             override fun onFrameDecoded() {
@@ -85,80 +166,75 @@ class StreamViewActivity : AppCompatActivity() {
 
             override fun onKeyFrameRequest() {
                 Log.d(TAG, "Decoder requesting key frame")
-                streamClient?.sendKeyFrameRequest()
-            }
-
-        })
-
-        // Wait for surface to be ready, then connect
-        surfaceRemote.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                Log.d(TAG, "Surface created, configuring decoder and connecting")
-                videoDecoder?.configure(holder.surface)
-                connectToServer()
-            }
-
-            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                Log.d(TAG, "Surface changed: ${width}x${height}")
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                Log.d(TAG, "Surface destroyed")
+                streamViewService?.requestKeyFrame()
             }
         })
 
-        startStatsUpdate()
-        startWatchdog()
-    }
+        // Resume decoder if it was paused
+        service.resumeDecoder()
 
-    private fun connectToServer() {
-        streamClient = StreamClient().apply {
-            setCallback(object : StreamClient.Callback {
-                override fun onConnected(serverIp: String) {
-                    runOnUiThread {
-                        tvStatusTop.text = getString(R.string.status_viewing, serverIp)
-                    }
-                }
-
-                override fun onSpsPpsReceived(sps: ByteArray, pps: ByteArray) {
-                    videoDecoder?.feedSpsPps(sps, pps)
-                }
-
-                override fun onFrameReceived(data: ByteArray, isKeyFrame: Boolean) {
-                    videoDecoder?.decodeFrame(data, isKeyFrame)
-                }
-
-                override fun onDisconnected() {
-                    runOnUiThread {
-                        tvStatusTop.text = getString(R.string.status_disconnected)
-                        Toast.makeText(this@StreamViewActivity, "Disconnected from server", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onError(error: String) {
-                    runOnUiThread {
-                        Toast.makeText(this@StreamViewActivity, "Error: $error", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            })
-            connect(remoteIp)
+        // Connect via service (only if not already connected)
+        if (!service.isStreamRunning()) {
+            connectToServer()
         }
     }
 
+    private fun connectToServer() {
+        streamViewService?.startStream(remoteIp, object : StreamClient.Callback {
+            override fun onConnected(serverIp: String) {
+                runOnUiThread {
+                    tvStatusTop.text = getString(R.string.status_viewing, serverIp)
+                }
+            }
+
+            override fun onSpsPpsReceived(sps: ByteArray, pps: ByteArray) {
+                streamViewService?.feedSpsPps(sps, pps)
+            }
+
+            override fun onFrameReceived(data: ByteArray, isKeyFrame: Boolean) {
+                streamViewService?.decodeFrame(data, isKeyFrame)
+            }
+
+            override fun onDisconnected() {
+                runOnUiThread {
+                    tvStatusTop.text = getString(R.string.status_disconnected)
+                    Toast.makeText(this@StreamViewActivity, "Disconnected from server", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onError(error: String) {
+                runOnUiThread {
+                    Toast.makeText(this@StreamViewActivity, "Error: $error", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+    }
+
     private fun stopViewing() {
-        streamClient?.stop()
-        videoDecoder?.stop()
         stopStatsUpdate()
+        stopWatchdog()
+
+        // Unbind from service
+        if (isServiceBound) {
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
+
+        // Stop the service
+        val stopIntent = Intent(this, StreamViewService::class.java).apply {
+            action = StreamViewService.ACTION_STOP
+        }
+        startService(stopIntent)
+
         finish()
     }
 
     private fun startStatsUpdate() {
         statsRunnable = object : Runnable {
             override fun run() {
-                val client = streamClient
-                if (client != null && client.isRunning()) {
-                    val bytes = client.getTotalBytesReceived()
-                    val frames = client.getTotalFramesReceived()
+                val service = streamViewService
+                if (service != null && service.isStreamRunning()) {
+                    val (bytes, frames) = service.getStats()
                     tvStatsInfo.text = "Frames: $frames | Data: ${bytes / 1024}KB"
                 }
                 handler.postDelayed(this, 1000)
@@ -194,11 +270,33 @@ class StreamViewActivity : AppCompatActivity() {
         watchdogRunnable?.let { handler.removeCallbacks(it) }
     }
 
+    override fun onStart() {
+        super.onStart()
+        streamViewService?.resumeDecoder()
+        Log.d(TAG, "Activity started, decoder resumed")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        streamViewService?.pauseDecoder()
+        Log.d(TAG, "Activity stopped, decoder paused")
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Log.d(TAG, "Configuration changed: ${newConfig.orientation}")
+        // Activity is not recreated, decoder continues running
+    }
+
     override fun onDestroy() {
         stopStatsUpdate()
         stopWatchdog()
-        streamClient?.stop()
-        videoDecoder?.stop()
+
+        if (isServiceBound) {
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
+
         super.onDestroy()
     }
 }
