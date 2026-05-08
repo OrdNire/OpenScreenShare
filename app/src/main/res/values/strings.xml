@@ -48,4 +48,8 @@
     <string name="overlay_permission_message">为确保切换应用时屏幕共享不中断，此应用需要在其他应用上方显示小型状态指示器。请授予悬浮窗权限以获得稳定的共享体验。</string>
     <string name="overlay_permission_allow">授予权限</string>
     <string name="overlay_permission_continue">仍然继续</string>
+    <string name="scan_qr_code">扫描二维码</string>
+    <string name="connect_button">连接</string>
+    <string name="or_divider">或</string>
+    <string name="qr_scan_hint">将二维码放入框内，即可自动扫描</string>
 </resources>

@@ -1,16 +1,21 @@
 package com.btscreenshare
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.zxing.integration.android.IntentIntegrator
 
 class LanConnectActivity : AppCompatActivity() {
 
@@ -23,6 +28,17 @@ class LanConnectActivity : AppCompatActivity() {
     private lateinit var etRemoteIp: TextInputEditText
     private lateinit var btnShareScreen: MaterialButton
     private lateinit var btnViewScreen: MaterialButton
+    private lateinit var btnScanQr: MaterialButton
+
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchQrScanner()
+        } else {
+            Toast.makeText(this, "需要相机权限才能扫描二维码", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +52,7 @@ class LanConnectActivity : AppCompatActivity() {
         etRemoteIp = findViewById(R.id.etRemoteIp)
         btnShareScreen = findViewById(R.id.btnShareScreen)
         btnViewScreen = findViewById(R.id.btnViewScreen)
+        btnScanQr = findViewById(R.id.btnScanQr)
 
         detectAndDisplayNetwork()
 
@@ -53,6 +70,56 @@ class LanConnectActivity : AppCompatActivity() {
                 finish()
             }
         }
+
+        btnScanQr.setOnClickListener {
+            checkCameraPermissionAndScan()
+        }
+    }
+
+    private fun checkCameraPermissionAndScan() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            launchQrScanner()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchQrScanner() {
+        val integrator = IntentIntegrator(this)
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+        integrator.setPrompt(getString(R.string.qr_scan_hint))
+        integrator.setBeepEnabled(true)
+        integrator.setOrientationLocked(true)
+        integrator.initiateScan()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            if (result.contents == null) {
+                // User cancelled
+                Toast.makeText(this, "扫描已取消", Toast.LENGTH_SHORT).show()
+            } else {
+                // QR content is just the IP address
+                val scannedIp = result.contents.trim()
+                if (validateIp(scannedIp)) {
+                    connectToPartner(scannedIp)
+                } else {
+                    Toast.makeText(this, "无效的IP地址: $scannedIp", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    private fun connectToPartner(partnerIp: String) {
+        val intent = Intent(this, StreamViewActivity::class.java)
+        intent.putExtra(PairingActivity.EXTRA_REMOTE_IP, partnerIp)
+        startActivity(intent)
+        finish()
     }
 
     private fun detectAndDisplayNetwork() {

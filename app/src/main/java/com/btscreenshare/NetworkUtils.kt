@@ -101,6 +101,12 @@ object NetworkUtils {
         if (interfaces.isEmpty()) return null
         return interfaces.joinToString("\n") { it.displayText }
     }
+    /**
+     * Get the primary (first) IP address as a simple string.
+     */
+    fun getPrimaryIp(): String? {
+        return getAllNetworkInterfaces().firstOrNull()?.ip
+    }
 
     /**
      * Get scenario hint based on detected network interfaces.

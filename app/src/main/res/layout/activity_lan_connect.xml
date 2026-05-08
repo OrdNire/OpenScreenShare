@@ -143,6 +143,25 @@
                     android:textColor="@color/md_on_surface_variant"
                     android:layout_marginBottom="12dp" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScanQr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/scan_qr_code"
+                    app:icon="@drawable/ic_view_screen"
+                    app:iconGravity="textStart"
+                    app:cornerRadius="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/or_divider"
+                    android:textSize="12sp"
+                    android:textColor="@color/md_on_surface_variant"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -163,7 +182,7 @@
                     android:id="@+id/btnViewScreen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/view_screen"
+                    android:text="@string/connect_button"
                     app:icon="@drawable/ic_view_screen"
                     app:iconGravity="textStart"
                     app:cornerRadius="8dp"

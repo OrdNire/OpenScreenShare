@@ -32,12 +32,18 @@
     <!-- Audio recording (often paired with screen capture) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Camera permission for QR code scanning -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="false" />
     <uses-feature
         android:name="android.hardware.wifi"
         android:required="true" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
