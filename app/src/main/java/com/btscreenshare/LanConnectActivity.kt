@@ -1,9 +1,12 @@
 package com.btscreenshare
 
+import android.content.res.ColorStateList
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.util.TypedValue
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -102,12 +105,21 @@ class LanConnectActivity : AppCompatActivity() {
     }
 
     private fun updateQualityButtonStyles(selected: VideoQuality, buttons: List<MaterialButton>) {
+        val typedValue = TypedValue()
+        theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
+        val primaryColor = typedValue.data
+
         val qualities = listOf(VideoQuality.LOW, VideoQuality.BALANCED, VideoQuality.HIGH, VideoQuality.ULTRA)
         buttons.forEachIndexed { index, button ->
             if (qualities[index] == selected) {
-                button.style = com.google.android.material.button.MaterialButton.STYLE_FILLED
+                // Filled style: solid background, no stroke
+                button.backgroundTintList = ColorStateList.valueOf(primaryColor)
+                button.strokeWidth = 0
             } else {
-                button.style = com.google.android.material.button.MaterialButton.STYLE_OUTLINED
+                // Outlined style: transparent background, visible stroke
+                button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+                button.strokeWidth = 2
+                button.strokeColor = ColorStateList.valueOf(primaryColor)
             }
         }
     }
