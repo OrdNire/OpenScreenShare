@@ -8,7 +8,9 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import android.view.Surface
 
@@ -23,11 +25,20 @@ class StreamViewService : Service() {
         const val EXTRA_SERVER_IP = "server_ip"
     }
 
+    /**
+     * Callback for service-level events (e.g. remote disconnect).
+     * Activities bind and set this to react to lifecycle events.
+     */
+    interface DisconnectListener {
+        fun onRemoteDisconnected()
+    }
+
     private var streamClient: StreamClient? = null
     private var videoDecoder: VideoDecoder? = null
     private var serverIp: String? = null
     private var isPaused = false
     private val binder = LocalBinder()
+    private var disconnectListener: DisconnectListener? = null
 
     // Saved SPS/PPS for decoder recreation
     private var savedSps: ByteArray? = null
@@ -35,6 +46,10 @@ class StreamViewService : Service() {
 
     inner class LocalBinder : Binder() {
         fun getService(): StreamViewService = this@StreamViewService
+    }
+
+    fun setDisconnectListener(listener: DisconnectListener?) {
+        disconnectListener = listener
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -144,6 +159,17 @@ class StreamViewService : Service() {
     }
 
     fun isStreamRunning(): Boolean = streamClient?.isRunning() == true
+
+    /**
+     * Called when the stream client detects a remote disconnect.
+     * Notifies the bound activity via the DisconnectListener on the main thread.
+     */
+    fun notifyRemoteDisconnected() {
+        Log.d(TAG, "Remote disconnect detected, notifying listener")
+        Handler(Looper.getMainLooper()).post {
+            disconnectListener?.onRemoteDisconnected()
+        }
+    }
 
     fun getStats(): Pair<Long, Long> {
         val bytes = streamClient?.getTotalBytesReceived() ?: 0L

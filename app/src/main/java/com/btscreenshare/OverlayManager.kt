@@ -126,6 +126,10 @@ object OverlayManager {
     }
 
     private fun stopScreenCapture(context: Context) {
+        // Stop StreamServer first so the receiver detects the disconnect
+        StreamServerHolder.streamServer?.stop()
+        StreamServerHolder.streamServer = null
+
         val intent = Intent(context, ScreenCaptureService::class.java).apply {
             action = ScreenCaptureService.ACTION_STOP
         }

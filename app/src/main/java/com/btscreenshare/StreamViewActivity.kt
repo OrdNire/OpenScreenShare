@@ -19,7 +19,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 
-class StreamViewActivity : AppCompatActivity() {
+class StreamViewActivity : AppCompatActivity(), StreamViewService.DisconnectListener {
 
     companion object {
         private const val TAG = "StreamViewActivity"
@@ -42,17 +42,20 @@ class StreamViewActivity : AppCompatActivity() {
     private var watchdogRunnable: Runnable? = null
     @Volatile private var lastFrameDecodedTime = 0L
     private var frozenWarningShown = false
+    @Volatile private var isNavigatingHome = false
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             val binder = service as StreamViewService.LocalBinder
             streamViewService = binder.getService()
+            streamViewService?.setDisconnectListener(this@StreamViewActivity)
             isServiceBound = true
             Log.d(TAG, "Service connected")
             initIfReady()
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
+            streamViewService?.setDisconnectListener(null)
             streamViewService = null
             isServiceBound = false
             Log.d(TAG, "Service disconnected")
@@ -196,26 +199,76 @@ class StreamViewActivity : AppCompatActivity() {
             }
 
             override fun onDisconnected() {
-                runOnUiThread {
-                    tvStatusTop.text = getString(R.string.status_disconnected)
-                    Toast.makeText(this@StreamViewActivity, "Disconnected from server", Toast.LENGTH_SHORT).show()
-                }
+                Log.d(TAG, "StreamClient disconnected")
+                // Notify the service, which will relay to the activity's DisconnectListener
+                streamViewService?.notifyRemoteDisconnected()
             }
 
             override fun onError(error: String) {
-                runOnUiThread {
-                    Toast.makeText(this@StreamViewActivity, "Error: $error", Toast.LENGTH_SHORT).show()
-                }
+                Log.e(TAG, "StreamClient error: $error")
+                // Connection errors should also trigger disconnect flow
+                streamViewService?.notifyRemoteDisconnected()
             }
         })
     }
 
+    /**
+     * Called by StreamViewService when the remote sharer disconnects.
+     * Must be called on the main thread (service should ensure this).
+     */
+    override fun onRemoteDisconnected() {
+        if (isNavigatingHome || isFinishing || isDestroyed) {
+            Log.d(TAG, "onRemoteDisconnected: already navigating or destroyed, skipping")
+            return
+        }
+        isNavigatingHome = true
+        Log.d(TAG, "Remote sharer disconnected, navigating to home")
+
+        tvStatusTop.text = getString(R.string.status_disconnected)
+        Toast.makeText(this, "Sharing ended", Toast.LENGTH_SHORT).show()
+
+        // Brief delay so the user can see the message, then navigate home
+        handler.postDelayed({
+            navigateToHome()
+        }, 1500)
+    }
+
+    /**
+     * Clean up all resources and navigate back to LanConnectActivity (home page).
+     */
+    private fun navigateToHome() {
+        if (isFinishing || isDestroyed) return
+
+        stopStatsUpdate()
+        stopWatchdog()
+
+        // Unbind and stop the service
+        if (isServiceBound) {
+            streamViewService?.setDisconnectListener(null)
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
+        val stopIntent = Intent(this, StreamViewService::class.java).apply {
+            action = StreamViewService.ACTION_STOP
+        }
+        startService(stopIntent)
+
+        // Navigate back to home
+        val homeIntent = Intent(this, LanConnectActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(homeIntent)
+        finish()
+    }
+
     private fun stopViewing() {
+        isNavigatingHome = true
         stopStatsUpdate()
         stopWatchdog()
 
         // Unbind from service
         if (isServiceBound) {
+            streamViewService?.setDisconnectListener(null)
             unbindService(serviceConnection)
             isServiceBound = false
         }
@@ -293,6 +346,7 @@ class StreamViewActivity : AppCompatActivity() {
         stopWatchdog()
 
         if (isServiceBound) {
+            streamViewService?.setDisconnectListener(null)
             unbindService(serviceConnection)
             isServiceBound = false
         }
