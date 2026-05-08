@@ -28,6 +28,7 @@ class ScreenCaptureService : Service() {
         const val ACTION_STOP = "com.btscreenshare.STOP_CAPTURE"
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_RESULT_DATA = "result_data"
+        const val EXTRA_VIDEO_QUALITY = "video_quality"
 
         private var currentMediaProjection: MediaProjection? = null
         private var currentEncoder: VideoEncoder? = null
@@ -38,8 +39,9 @@ class ScreenCaptureService : Service() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var encoder: VideoEncoder? = null
-    private var screenWidth = VideoEncoder.WIDTH
-    private var screenHeight = VideoEncoder.HEIGHT
+    private var videoQuality: VideoQuality = VideoQuality.BALANCED
+    private var screenWidth = 0
+    private var screenHeight = 0
     private var screenDpi = 320
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -49,15 +51,9 @@ class ScreenCaptureService : Service() {
         super.onCreate()
         createNotificationChannel()
 
-        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val metrics = DisplayMetrics()
-        @Suppress("DEPRECATION")
-        wm.defaultDisplay.getRealMetrics(metrics)
-        // Use the smaller of screen size or 720p to avoid encoding issues
-        screenWidth = minOf(metrics.widthPixels, VideoEncoder.WIDTH)
-        screenHeight = minOf(metrics.heightPixels, VideoEncoder.HEIGHT)
-        screenDpi = metrics.densityDpi
-        Log.d(TAG, "Screen: ${screenWidth}x${screenHeight} @ ${screenDpi}dpi")
+        // Use default quality dimensions for initial setup
+        screenWidth = VideoQuality.BALANCED.width
+        screenHeight = VideoQuality.BALANCED.height
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -70,6 +66,12 @@ class ScreenCaptureService : Service() {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra(EXTRA_RESULT_DATA)
                 }
+
+                // Read video quality from intent
+                val qualityName = intent.getStringExtra(EXTRA_VIDEO_QUALITY)
+                videoQuality = qualityName?.let { name ->
+                    VideoQuality.values().find { it.name == name } ?: VideoQuality.BALANCED
+                } ?: VideoQuality.BALANCED
 
                 if (resultData != null) {
                     startForeground(NOTIFICATION_ID, createNotification())
@@ -92,6 +94,19 @@ class ScreenCaptureService : Service() {
         // Acquire WakeLock to prevent CPU sleep
         acquireWakeLock()
 
+        // Get display metrics for DPI
+        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        wm.defaultDisplay.getRealMetrics(metrics)
+        screenDpi = metrics.densityDpi
+
+        // Use quality dimensions, but cap at actual screen size
+        screenWidth = minOf(metrics.widthPixels, videoQuality.width)
+        screenHeight = minOf(metrics.heightPixels, videoQuality.height)
+
+        Log.d(TAG, "Quality: ${videoQuality.displayName}, Screen: ${screenWidth}x${screenHeight} @ ${screenDpi}dpi")
+
         val projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         mediaProjection = projectionManager.getMediaProjection(resultCode, resultData)
         currentMediaProjection = mediaProjection
@@ -103,8 +118,9 @@ class ScreenCaptureService : Service() {
             }
         }, null)
 
-        // Create encoder
+        // Create encoder with selected quality
         encoder = VideoEncoder()
+        encoder?.quality = videoQuality
         currentEncoder = encoder
 
         // Set up the encoder callback to feed the StreamServer

@@ -11,13 +11,10 @@ class VideoEncoder {
 
     companion object {
         private const val TAG = "VideoEncoder"
-        const val WIDTH = 1280
-        const val HEIGHT = 720
-        const val BITRATE = 6_000_000 // 3 Mbps
-        const val FRAME_RATE = 60
-        const val I_FRAME_INTERVAL = 3 // seconds (scrcpy default, lower bandwidth)
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
     }
+
+    var quality: VideoQuality = VideoQuality.BALANCED
 
     interface Callback {
         fun onEncodedFrame(data: ByteArray, isKeyFrame: Boolean)
@@ -40,15 +37,17 @@ class VideoEncoder {
 
     fun start() {
         try {
-            val format = MediaFormat.createVideoFormat(MIME_TYPE, WIDTH, HEIGHT).apply {
-                setInteger(MediaFormat.KEY_BIT_RATE, BITRATE)
-                setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL)
+            val format = MediaFormat.createVideoFormat(MIME_TYPE, quality.width, quality.height).apply {
+                setInteger(MediaFormat.KEY_BIT_RATE, quality.bitrate)
+                setInteger(MediaFormat.KEY_FRAME_RATE, quality.frameRate)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, quality.iFrameInterval)
                 setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 100_000L) // 100ms for static frames
                 setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                // Use High profile for better compression
-                setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileHigh)
-                setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel31)
+                // Set profile based on quality setting
+                if (quality.profile == MediaCodecInfo.CodecProfileLevel.AVCProfileHigh) {
+                    setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileHigh)
+                    setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel31)
+                }
                 // Use CBR for consistent bandwidth (prevents burst frames)
                 setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
             }
@@ -65,7 +64,7 @@ class VideoEncoder {
                 drainEncoder()
             }, "EncoderDrainThread").apply { start() }
 
-            Log.d(TAG, "Encoder started: ${WIDTH}x${HEIGHT} @ ${BITRATE / 1_000_000}Mbps ${FRAME_RATE}fps (High Profile, CBR)")
+            Log.d(TAG, "Encoder started: ${quality.width}x${quality.height} @ ${quality.bitrate / 1_000_000}Mbps ${quality.frameRate}fps (${quality.displayName}, CBR)")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start encoder", e)
             callback?.onEncoderError("Failed to start encoder: ${e.message}")

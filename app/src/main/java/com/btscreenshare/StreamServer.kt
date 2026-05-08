@@ -10,7 +10,7 @@ import java.net.Socket
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class StreamServer {
+class StreamServer(private val queueCapacity: Int = 10) {
 
     companion object {
         private const val TAG = "StreamServer"
@@ -44,7 +44,7 @@ class StreamServer {
     private var encoder: VideoEncoder? = null
 
     // Bounded frame queue: encoder adds, sender takes
-    private val frameQueue = ArrayBlockingQueue<ByteArray>(10)
+    private val frameQueue = ArrayBlockingQueue<ByteArray>(queueCapacity)
     private val writeLock = Object()
 
     private var spsData: ByteArray? = null

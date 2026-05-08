@@ -13,10 +13,18 @@ import com.google.android.material.textfield.TextInputEditText
 
 class LanConnectActivity : AppCompatActivity() {
 
+    companion object {
+        var selectedQuality: VideoQuality = VideoQuality.BALANCED
+    }
+
     private lateinit var tvLocalIp: TextView
     private lateinit var etRemoteIp: TextInputEditText
     private lateinit var btnShareScreen: MaterialButton
     private lateinit var btnViewScreen: MaterialButton
+    private lateinit var btnQualityLow: MaterialButton
+    private lateinit var btnQualityBalanced: MaterialButton
+    private lateinit var btnQualityHigh: MaterialButton
+    private lateinit var btnQualityUltra: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,8 +37,13 @@ class LanConnectActivity : AppCompatActivity() {
         etRemoteIp = findViewById(R.id.etRemoteIp)
         btnShareScreen = findViewById(R.id.btnShareScreen)
         btnViewScreen = findViewById(R.id.btnViewScreen)
+        btnQualityLow = findViewById(R.id.btnQualityLow)
+        btnQualityBalanced = findViewById(R.id.btnQualityBalanced)
+        btnQualityHigh = findViewById(R.id.btnQualityHigh)
+        btnQualityUltra = findViewById(R.id.btnQualityUltra)
 
         displayWifiIp()
+        setupQualityButtons()
 
         btnShareScreen.setOnClickListener {
             // Share mode: no IP needed, just start server and wait
@@ -68,6 +81,34 @@ class LanConnectActivity : AppCompatActivity() {
             val clip = android.content.ClipData.newPlainText("IP Address", ip)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, getString(R.string.ip_copied), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupQualityButtons() {
+        val qualityButtons = listOf(btnQualityLow, btnQualityBalanced, btnQualityHigh, btnQualityUltra)
+
+        btnQualityLow.setOnClickListener { selectQuality(VideoQuality.LOW, qualityButtons) }
+        btnQualityBalanced.setOnClickListener { selectQuality(VideoQuality.BALANCED, qualityButtons) }
+        btnQualityHigh.setOnClickListener { selectQuality(VideoQuality.HIGH, qualityButtons) }
+        btnQualityUltra.setOnClickListener { selectQuality(VideoQuality.ULTRA, qualityButtons) }
+
+        // Set initial selection
+        updateQualityButtonStyles(selectedQuality, qualityButtons)
+    }
+
+    private fun selectQuality(quality: VideoQuality, buttons: List<MaterialButton>) {
+        selectedQuality = quality
+        updateQualityButtonStyles(quality, buttons)
+    }
+
+    private fun updateQualityButtonStyles(selected: VideoQuality, buttons: List<MaterialButton>) {
+        val qualities = listOf(VideoQuality.LOW, VideoQuality.BALANCED, VideoQuality.HIGH, VideoQuality.ULTRA)
+        buttons.forEachIndexed { index, button ->
+            if (qualities[index] == selected) {
+                button.style = com.google.android.material.button.MaterialButton.STYLE_FILLED
+            } else {
+                button.style = com.google.android.material.button.MaterialButton.STYLE_OUTLINED
+            }
         }
     }
 

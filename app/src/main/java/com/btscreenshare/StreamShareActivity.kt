@@ -84,7 +84,7 @@ class StreamShareActivity : AppCompatActivity() {
         }
 
         // Start StreamServer
-        streamServer = StreamServer().apply {
+        streamServer = StreamServer(LanConnectActivity.selectedQuality.queueCapacity).apply {
             setCallback(object : StreamServer.Callback {
                 override fun onClientConnected(clientIp: String) {
                     runOnUiThread {
@@ -208,6 +208,7 @@ class StreamShareActivity : AppCompatActivity() {
             action = ScreenCaptureService.ACTION_START
             putExtra(ScreenCaptureService.EXTRA_RESULT_CODE, resultCode)
             putExtra(ScreenCaptureService.EXTRA_RESULT_DATA, data)
+            putExtra(ScreenCaptureService.EXTRA_VIDEO_QUALITY, LanConnectActivity.selectedQuality.name)
         }
         startForegroundService(serviceIntent)
         tvStatusTop.text = getString(R.string.status_streaming, remoteIp)
