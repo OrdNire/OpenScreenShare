@@ -226,7 +226,7 @@ class ScreenCaptureService : Service() {
             getString(R.string.notification_channel),
             NotificationManager.IMPORTANCE_HIGH // Changed from LOW to HIGH
         ).apply {
-            description = "Screen capture service notification"
+            description = "屏幕捕获服务通知"
             setShowBadge(false)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }

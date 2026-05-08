@@ -40,7 +40,7 @@ class StreamShareActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK && result.data != null) {
             startCaptureService(result.resultCode, result.data!!)
         } else {
-            Toast.makeText(this, "Screen capture permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "屏幕录制权限被拒绝", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
@@ -60,7 +60,7 @@ class StreamShareActivity : AppCompatActivity() {
             Log.d(TAG, "Overlay permission granted")
             requestMediaProjection()
         } else {
-            Toast.makeText(this, "Overlay permission required for reliable screen sharing", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "需要悬浮窗权限以确保稳定共享", Toast.LENGTH_LONG).show()
             // Allow user to continue anyway
             requestMediaProjection()
         }
@@ -100,7 +100,7 @@ class StreamShareActivity : AppCompatActivity() {
 
                 override fun onServerError(error: String) {
                     runOnUiThread {
-                        Toast.makeText(this@StreamShareActivity, "Server error: $error", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@StreamShareActivity, "服务器错误: $error", Toast.LENGTH_SHORT).show()
                     }
                 }
             })
@@ -242,7 +242,7 @@ class StreamShareActivity : AppCompatActivity() {
                 if (server != null && server.isRunning()) {
                     val bytes = server.getTotalBytesSent()
                     val frames = server.getTotalFramesSent()
-                    tvStatsInfo.text = "Frames: $frames | Data: ${bytes / 1024}KB | Connected: ${server.isClientConnected()}"
+                    tvStatsInfo.text = "帧数: $frames | 数据: ${bytes / 1024}KB | 已连接: ${server.isClientConnected()}"
                 }
                 handler.postDelayed(this, 1000)
             }

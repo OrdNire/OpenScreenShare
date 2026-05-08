@@ -87,7 +87,7 @@ object OverlayManager {
 
         // Status indicator dot and text
         val statusText = TextView(context).apply {
-            text = "● Sharing"
+            text = "● 共享中"
             setTextColor(0xFFFFFFFF.toInt())
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(
@@ -101,7 +101,7 @@ object OverlayManager {
 
         // Stop button
         val stopButton = Button(context).apply {
-            text = "Stop"
+            text = "停止"
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0x44FF0000.toInt()) // Semi-transparent red
             textSize = 12f

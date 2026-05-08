@@ -225,7 +225,7 @@ class StreamViewActivity : AppCompatActivity(), StreamViewService.DisconnectList
         Log.d(TAG, "Remote sharer disconnected, navigating to home")
 
         tvStatusTop.text = getString(R.string.status_disconnected)
-        Toast.makeText(this, "Sharing ended", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "共享已结束", Toast.LENGTH_SHORT).show()
 
         // Brief delay so the user can see the message, then navigate home
         handler.postDelayed({
@@ -288,7 +288,7 @@ class StreamViewActivity : AppCompatActivity(), StreamViewService.DisconnectList
                 val service = streamViewService
                 if (service != null && service.isStreamRunning()) {
                     val (bytes, frames) = service.getStats()
-                    tvStatsInfo.text = "Frames: $frames | Data: ${bytes / 1024}KB"
+                    tvStatsInfo.text = "帧数: $frames | 数据: ${bytes / 1024}KB"
                 }
                 handler.postDelayed(this, 1000)
             }
@@ -310,7 +310,7 @@ class StreamViewActivity : AppCompatActivity(), StreamViewService.DisconnectList
                 if (timeSinceLastFrame > 10_000 && !frozenWarningShown) {
                     Log.w(TAG, "Video appears frozen - no frames for ${timeSinceLastFrame}ms")
                     frozenWarningShown = true
-                    Toast.makeText(this@StreamViewActivity, "Video appears frozen. Check connection.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@StreamViewActivity, "视频似乎卡住了，请检查连接。", Toast.LENGTH_LONG).show()
                 }
 
                 handler.postDelayed(this, 5_000)

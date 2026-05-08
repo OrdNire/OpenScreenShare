@@ -31,7 +31,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Manual Connect (Skip Bluetooth)"
+                android:text="手动连接（跳过蓝牙）"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/md_on_surface"
@@ -40,7 +40,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter IP Address"
+                android:hint="输入IP地址"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_marginBottom="8dp">
 
@@ -58,7 +58,7 @@
                 android:id="@+id/btnManualConnect"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Connect"
+                android:text="连接"
                 app:cornerRadius="8dp"
                 style="@style/Widget.Material3.Button.TonalButton" />
 

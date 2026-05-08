@@ -61,7 +61,7 @@ class PairingActivity : AppCompatActivity() {
             if (ipAddress.isNotEmpty()) {
                 connectToIp(ipAddress)
             } else {
-                Toast.makeText(this, "Please enter IP address", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "请输入IP地址", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -82,7 +82,7 @@ class PairingActivity : AppCompatActivity() {
                     if (device !in allDevices) {
                         allDevices.add(device)
                         deviceAdapter.notifyItemInserted(allDevices.size - 1)
-                        tvStatus.text = "${allDevices.size} device(s) found"
+                        tvStatus.text = "已发现 ${allDevices.size} 个设备"
                     }
                 }
             }
@@ -109,7 +109,7 @@ class PairingActivity : AppCompatActivity() {
             override fun onConnectionEstablished(remoteIp: String) {
                 runOnUiThread {
                     isConnecting = false
-                    Toast.makeText(this@PairingActivity, "Connected! Remote IP: $remoteIp", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@PairingActivity, "连接成功！对方IP: $remoteIp", Toast.LENGTH_SHORT).show()
 
                     if (isSharing) {
                         val intent = Intent(this@PairingActivity, StreamShareActivity::class.java)
@@ -127,15 +127,15 @@ class PairingActivity : AppCompatActivity() {
             override fun onConnectionFailed(error: String) {
                 runOnUiThread {
                     isConnecting = false
-                    Toast.makeText(this@PairingActivity, "Connection failed: $error", Toast.LENGTH_LONG).show()
-                    tvStatus.text = "Connection failed. Try again."
+                    Toast.makeText(this@PairingActivity, "连接失败: $error", Toast.LENGTH_LONG).show()
+                    tvStatus.text = "连接失败，请重试。"
                     progressScan.visibility = View.GONE
                 }
             }
 
             override fun onDisconnected() {
                 runOnUiThread {
-                    Toast.makeText(this@PairingActivity, "Bluetooth disconnected", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@PairingActivity, "蓝牙已断开", Toast.LENGTH_SHORT).show()
                 }
             }
         })
@@ -149,7 +149,7 @@ class PairingActivity : AppCompatActivity() {
         }
         if (allDevices.isNotEmpty()) {
             deviceAdapter.notifyDataSetChanged()
-            tvStatus.text = "${allDevices.size} paired device(s). Tap scan for more."
+            tvStatus.text = "已配对 ${allDevices.size} 个设备。点击扫描更多。"
         }
 
         // Scan button
@@ -163,7 +163,7 @@ class PairingActivity : AppCompatActivity() {
     private fun connectToIp(ipAddress: String) {
         isConnecting = true
         progressScan.visibility = View.VISIBLE
-        tvStatus.text = "Connecting to $ipAddress..."
+        tvStatus.text = "正在连接到 $ipAddress..."
 
         // Navigate directly to streaming activity with the IP
         if (isSharing) {
@@ -181,7 +181,7 @@ class PairingActivity : AppCompatActivity() {
     private fun connectToDevice(device: BluetoothDevice) {
         isConnecting = true
         progressScan.visibility = View.VISIBLE
-        tvStatus.text = "Connecting to ${device.name ?: device.address}..."
+        tvStatus.text = "正在连接到 ${device.name ?: device.address}..."
 
         // If sharing, we're the server (viewer connects to us)
         // If viewing, we connect to the sharer
@@ -222,16 +222,16 @@ class PairingActivity : AppCompatActivity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
                         == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                        device.name ?: "Unknown Device"
+                        device.name ?: "未知设备"
                     } else {
-                        "Unknown Device"
+                        "未知设备"
                     }
                 } else {
                     @Suppress("DEPRECATION")
-                    device.name ?: "Unknown Device"
+                    device.name ?: "未知设备"
                 }
             } catch (e: Exception) {
-                "Unknown Device"
+                "未知设备"
             }
             holder.tvAddress.text = device.address
             holder.itemView.setOnClickListener { onItemClick(device) }

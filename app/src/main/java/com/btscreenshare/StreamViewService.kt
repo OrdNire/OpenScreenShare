@@ -188,10 +188,10 @@ class StreamViewService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Stream View Service",
+            "流媒体查看服务",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Keeps stream connection alive in background"
+            description = "在后台保持流媒体连接"
             setShowBadge(false)
         }
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -206,8 +206,8 @@ class StreamViewService : Service() {
         )
 
         return Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Viewing Stream")
-            .setContentText("Connected to $serverIp")
+            .setContentTitle("正在查看流媒体")
+            .setContentText("已连接到 $serverIp")
             .setSmallIcon(R.drawable.ic_share_screen)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
