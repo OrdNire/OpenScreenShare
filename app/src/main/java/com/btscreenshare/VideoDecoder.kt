@@ -60,7 +60,7 @@ class VideoDecoder {
         val surf = surface ?: return
 
         try {
-            val format = MediaFormat.createVideoFormat(MIME_TYPE, VideoEncoder.WIDTH, VideoEncoder.HEIGHT).apply {
+            val format = MediaFormat.createVideoFormat(MIME_TYPE, 1920, 1080).apply {
                 setByteBuffer("csd-0", java.nio.ByteBuffer.wrap(sps))
                 setByteBuffer("csd-1", java.nio.ByteBuffer.wrap(pps))
             }
