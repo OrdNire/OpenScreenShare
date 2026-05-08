@@ -135,5 +135,11 @@ object OverlayManager {
         }
         context.startService(intent)
         hide()
+
+        // Navigate back to home (LanConnectActivity) instead of leaving the user stranded
+        val homeIntent = Intent(context, LanConnectActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(homeIntent)
     }
 }

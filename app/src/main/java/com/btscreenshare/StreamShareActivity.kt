@@ -226,6 +226,12 @@ class StreamShareActivity : AppCompatActivity() {
         StreamServerHolder.streamServer = null
 
         stopStatsUpdate()
+
+        // Navigate back to home (LanConnectActivity) instead of just finishing
+        val homeIntent = Intent(this, LanConnectActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(homeIntent)
         finish()
     }
 
