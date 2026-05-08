@@ -34,6 +34,12 @@
     <string name="ip_copied">IP地址已复制</string>
     <string name="enter_partner_ip">请输入对方IP地址</string>
     <string name="invalid_ip_format">IP地址格式无效</string>
+    <string name="hint_wifi">两台设备需连接同一WiFi</string>
+    <string name="hint_hotspot">热点已开启，对方连接此热点后输入上方IP</string>
+    <string name="hint_no_network">请连接WiFi或开启热点</string>
+    <string name="hint_multiple_networks">检测到多个网络，请确认两台设备在同一网络</string>
+    <string name="hint_wifi_and_hotspot">检测到WiFi和热点，请确认两台设备在同一网络</string>
+    <string name="no_network_detected">未检测到网络连接</string>
     <string name="battery_optimization_title">电池优化</string>
     <string name="battery_optimization_message">为了确保屏幕共享稳定运行，此应用需要在后台运行。请关闭此应用的电池优化，以防切换到其他应用时被系统终止。</string>
     <string name="battery_optimization_allow">关闭优化</string>

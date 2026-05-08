@@ -19,6 +19,7 @@ class LanConnectActivity : AppCompatActivity() {
     }
 
     private lateinit var tvLocalIp: TextView
+    private lateinit var tvNetworkHint: TextView
     private lateinit var etRemoteIp: TextInputEditText
     private lateinit var btnShareScreen: MaterialButton
     private lateinit var btnViewScreen: MaterialButton
@@ -31,11 +32,12 @@ class LanConnectActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
 
         tvLocalIp = findViewById(R.id.tvLocalIp)
+        tvNetworkHint = findViewById(R.id.tvNetworkHint)
         etRemoteIp = findViewById(R.id.etRemoteIp)
         btnShareScreen = findViewById(R.id.btnShareScreen)
         btnViewScreen = findViewById(R.id.btnViewScreen)
 
-        displayWifiIp()
+        detectAndDisplayNetwork()
 
         btnShareScreen.setOnClickListener {
             showQualityDialog()
@@ -53,17 +55,48 @@ class LanConnectActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayWifiIp() {
+    private fun detectAndDisplayNetwork() {
+        // Try enhanced detection first (all interfaces)
+        val interfaces = NetworkUtils.getAllNetworkInterfaces()
+
+        if (interfaces.isNotEmpty()) {
+            // Build multi-line display with labels
+            val displayText = interfaces.joinToString("\n") { it.displayText }
+            tvLocalIp.text = displayText
+
+            // Set scenario hint
+            tvNetworkHint.text = NetworkUtils.getScenarioHint(interfaces)
+
+            // Copy first IP on click (for convenience)
+            val primaryIp = interfaces.first().ip
+            tvLocalIp.setOnClickListener {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("IP Address", primaryIp)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, getString(R.string.ip_copied), Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // Fallback to legacy WiFi detection
+            displayWifiIpFallback()
+        }
+    }
+
+    /**
+     * Legacy WiFi-only detection as fallback.
+     */
+    private fun displayWifiIpFallback() {
         val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val ipAddress = wifiManager.connectionInfo.ipAddress
 
         if (ipAddress == 0) {
             tvLocalIp.text = getString(R.string.no_wifi_connection)
+            tvNetworkHint.text = getString(R.string.hint_no_network)
             return
         }
 
         val ip = formatIp(ipAddress)
         tvLocalIp.text = ip
+        tvNetworkHint.text = getString(R.string.hint_wifi)
 
         tvLocalIp.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager

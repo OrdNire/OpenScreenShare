@@ -54,11 +54,13 @@
                     android:layout_marginBottom="4dp" />
 
                 <TextView
+                    android:id="@+id/tvNetworkHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/tell_ip_to_partner"
                     android:textSize="12sp"
-                    android:textColor="@color/md_on_surface_variant" />
+                    android:textColor="@color/md_on_surface_variant"
+                    android:layout_marginTop="4dp" />
 
             </LinearLayout>
 
