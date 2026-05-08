@@ -15,7 +15,7 @@ class VideoEncoder {
         const val HEIGHT = 720
         const val BITRATE = 6_000_000 // 3 Mbps
         const val FRAME_RATE = 60
-        const val I_FRAME_INTERVAL = 2 // seconds (faster recovery from artifacts)
+        const val I_FRAME_INTERVAL = 10 // seconds (scrcpy default, lower bandwidth)
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
     }
 
