@@ -3,7 +3,7 @@
     <string name="app_name">OpenScreenShare</string>
     <string name="share_screen">共享我的屏幕</string>
     <string name="view_screen">查看对方屏幕</string>
-    <string name="lan_connection">局域网连接</string>
+    <string name="lan_connection">OpenScreenShare</string>
     <string name="lan_description">通过WiFi直连，无需蓝牙配对</string>
     <string name="your_ip_address">你的IP地址</string>
     <string name="tell_ip_to_partner">将此IP告知对方</string>
